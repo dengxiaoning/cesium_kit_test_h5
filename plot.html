@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>h5案例-标会</title>
+		<link rel="stylesheet" href="./libs/Cesium/Widgets/widgets.css">
+		<script type="text/javascript" src="./libs/Cesium/Cesium.js"></script>
+		<script type="text/javascript" src="./libs/index.umd.js"></script>
+		<style type="text/css">
+			html,
+			body,
+			#cesiumContainer {
+				width: 100%;
+				height: 100%;
+			}
+
+			.menu {
+				position: absolute;
+				top: 5px;
+				right: 10px;
+				width: 500px;
+				padding: 20px 30px;
+				background-color: rgba(0, 0, 0, 0.6);
+			}
+
+			.menu span {
+				display: inline-block;
+				margin: 4px 6px;
+				color: #fff;
+				border: 1px solid #e0e0e0;
+				border-radius: 4px;
+				padding: 2px 4px;
+				cursor: pointer;
+			}
+
+			.menu span:hover {
+				border-color: aqua;
+				color: #e0e0e0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="cesiumContainer" class="fullSize"></div>
+		<div id="menuDom" class="menu"></div>
+		<script type="text/javascript">
+			window.onload = function() {
+				// 工具初始化
+				const drawObj = new cesium_dev_kit.Draw({
+					cesiumGlobal: Cesium,
+					containerId: 'cesiumContainer',
+					viewerConfig: {
+						infoBox: false,
+						shouldAnimate: true,
+					},
+					extraConfig: {},
+					MapImageryList: []
+				})
+				// 定义操作变量
+				const viewer = drawObj.viewer,
+					draw = drawObj.draw,
+					plotEntitiesId = [],
+					StraightArrowObj = drawObj.straightArrowObj,
+					AttackArrowObj = drawObj.attackArrowObj,
+					PincerArrowObj = drawObj.pincerArrowObj;
+
+				let tileset = viewer.scene.primitives.add(
+					new Cesium.Cesium3DTileset({
+						url: './static/data/3DTiles/building/tileset.json',
+					}),
+				)
+				tileset.style = new Cesium.Cesium3DTileStyle({
+					color: {
+						conditions: [
+							['${height} >= 300', 'rgba(0, 149, 251, 0.3)'],
+							['${height} >= 200', 'rgb(0, 149, 251, 0.3)'],
+							['${height} >= 100', 'rgb(0, 149, 251, 0.3)'],
+							['${height} >= 50', 'rgb(0, 149, 251, 0.3)'],
+							['${height} >= 25', 'rgb(0, 149, 251, 0.3)'],
+							['${height} >= 10', 'rgb(0, 149, 251, 0.3)'],
+							['${height} >= 5', 'rgb(0, 149, 251, 0.3)'],
+							['true', 'rgb(0, 149, 251, 0.3)'],
+						],
+					},
+				})
+				// 定义绘制操作
+				function caldDistain(itemVal) {
+					drawAgain();
+					switch (itemVal) {
+						case 'coordinates':
+							draw.drawPointGraphics()
+							break
+						case 'line':
+							draw.drawLineGraphics()
+							break
+						case 'polygon':
+							draw.drawPolygonGraphics()
+							break
+						case 'rectangle':
+							draw.drawRectangleGraphics()
+							break
+						case 'circular':
+							draw.drawCircleGraphics()
+							break
+
+						case 'polygonCable':
+							draw.drawPolygonGraphics({
+								height: 200
+							})
+							break
+						case 'Tetragonal':
+							draw.drawRectangleGraphics({
+								height: 200
+							})
+							break
+						case 'cylinder':
+							this.draw.drawCircleGraphics({
+								height: 200
+							})
+							break
+						case 'enclosure':
+							draw.drawWallGraphics()
+							break
+						case 'spherome':
+							draw.drawEllipsoidGraphics()
+							break
+						case 'circularCone':
+							draw.drawCylinderGraphics({
+								topRadius: 1
+							})
+							break
+						case 'circularColumn':
+							draw.drawCylinderGraphics()
+							break
+						case 'corridor':
+							draw.drawCorridorGraphics({
+								width: 100,
+								height: 20,
+								extrudedHeight: 200
+							})
+							break
+						case 'pipeline':
+							draw.drawPolylineVolumeGraphics()
+							break
+						case 'fivePoint':
+							draw.drawPolylineVolumeGraphics({
+								color: Cesium.Color.fromCssColorString("#FFD700"),
+								shape: 'fivePoint',
+								arms: 5,
+								rOuter: 25,
+								rInner: 50
+							})
+							break;
+						case 'StraightArrow':
+							AttackArrowObj.disable()
+							PincerArrowObj.disable()
+							StraightArrowObj.startDraw(entiteId => {
+								plotEntitiesId.push(entiteId)
+							})
+							break
+						case 'AttackArrow':
+							PincerArrowObj.disable()
+							StraightArrowObj.disable()
+							AttackArrowObj.startDraw(entiteId => {
+								plotEntitiesId.push(entiteId)
+							})
+							break
+						case 'PincerArrow':
+							StraightArrowObj.disable()
+							AttackArrowObj.disable()
+							PincerArrowObj.startDraw(entiteId => {
+								plotEntitiesId.push(entiteId)
+							})
+							break
+						case 'clean':
+							draw._drawLayer.entities.removeAll()
+							plotEntitiesId.forEach(e => {
+								viewer.entities.removeById(e)
+							})
+							break
+					}
+				}
+
+				function drawAgain() {
+					PincerArrowObj.disable()
+					StraightArrowObj.disable()
+					AttackArrowObj.disable()
+				}
+
+				function loadingMenuDom() {
+					const menuData = [{
+							label: '坐标点',
+							value: 'coordinates'
+						},
+						{
+							label: '线段',
+							value: 'line'
+						},
+						{
+							label: '多边形',
+							value: 'polygon'
+						},
+						{
+							label: '矩形',
+							value: 'rectangle'
+						},
+						{
+							label: '圆形',
+							value: 'circular'
+						},
+						{
+							label: '多边立方体',
+							value: 'polygonCable'
+						},
+						{
+							label: '四方体',
+							value: 'Tetragonal'
+						},
+						{
+							label: '圆柱体',
+							value: 'cylinder'
+						},
+						{
+							label: '围栏',
+							value: 'enclosure'
+						},
+						{
+							label: '球体',
+							value: 'spherome'
+						},
+						{
+							label: '圆锥',
+							value: 'circularCone'
+						},
+						{
+							label: '圆柱',
+							value: 'circularColumn'
+						},
+						{
+							label: '走廊',
+							value: 'corridor'
+						},
+						{
+							label: '管道',
+							value: 'pipeline'
+						},
+						{
+							label: '五角管道',
+							value: 'fivePoint'
+						},
+						{
+							label: '直角箭头',
+							value: 'StraightArrow'
+						},
+						{
+							label: '攻击箭头',
+							value: 'AttackArrow'
+						},
+						{
+							label: '钳击箭头',
+							value: 'PincerArrow'
+						},
+						{
+							label: '清除',
+							value: 'clean'
+						}
+					]
+					const htmlDom = []
+					menuData.forEach(e => {
+						htmlDom.push(`<span data-val="${e.value}">${e.label}</span>`)
+					})
+					const parentDom = document.getElementById('menuDom');
+					parentDom.innerHTML = htmlDom.join(',')
+				}
+
+				function menuClick(e) {
+					if (e.target.tagName == 'SPAN') {
+						caldDistain(e.target.dataset.val)
+					}
+				}
+				// 绑定点击
+				const parentDom = document.getElementById('menuDom');
+				parentDom.addEventListener('click', menuClick);
+				// 加载菜单
+				loadingMenuDom();
+				// 视角定位
+				viewer.flyTo(tileset);
+			}
+		</script>
+	</body>
+</html>
