@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>h5案例-河流</title>
+		<link rel="stylesheet" href="./libs/Cesium/Widgets/widgets.css">
+		<script type="text/javascript" src="./libs/Cesium/Cesium.js"></script>
+		<script type="text/javascript" src="./libs/index.umd.js"></script>
+		<style type="text/css">
+			html,
+			body,
+			#cesiumContainer {
+				width: 100%;
+				height: 100%;
+			}
+
+			.menu {
+				position: absolute;
+				top: 5px;
+				right: 10px;
+				width: 500px;
+				padding: 20px 30px;
+				background-color: rgba(0, 0, 0, 0.6);
+			}
+
+			.menu span {
+				display: inline-block;
+				margin: 4px 6px;
+				color: #fff;
+				border: 1px solid #e0e0e0;
+				border-radius: 4px;
+				padding: 2px 4px;
+				cursor: pointer;
+			}
+
+			.menu span:hover {
+				border-color: aqua;
+				color: #e0e0e0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="cesiumContainer" class="fullSize"></div>
+		<div id="menuDom" class="menu"></div>
+		<script type="text/javascript">
+			const tempData = [{
+					id: 3,
+					name: '高德地图02',
+					type: 'UrlTemplateImageryProvider',
+					classConfig: {
+						url: 'https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+					},
+					interfaceConfig: {},
+					offset: '0,0',
+					invertswitch: 0,
+					filterRGB: '#ffffff',
+					showswitch: 1,
+					weigh: 13,
+					createtime: 1624346908,
+					updatetime: 1647395260,
+				},
+				{
+					id: 14,
+					name: '高德地图01',
+					type: 'UrlTemplateImageryProvider',
+					classConfig: {
+						url: 'http://webst03.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&style=7',
+					},
+					interfaceConfig: {
+						saturation: 0,
+						brightness: 0.6,
+						contrast: 1.8,
+						hue: 1,
+						gamma: 0.3,
+					},
+					offset: '0,0',
+					invertswitch: 1,
+					filterRGB: '#4e70a6',
+					showswitch: 1,
+					weigh: 0,
+					createtime: 1624326728,
+					updatetime: 1646979297,
+				},
+			]
+			window.onload = function() {
+				// 工具初始化
+				const {
+					viewer,
+					graphics,
+					draw,
+					base
+				} = new cesium_dev_kit.initCesium({
+					cesiumGlobal: Cesium,
+					containerId: 'cesiumContainer',
+					viewerConfig: {
+						infoBox: false,
+						shouldAnimate: true,
+					},
+					extraConfig: {},
+					MapImageryList: tempData
+				})
+
+				// 定义绘制操作
+				function caldDistain(itemVal) {
+					const pos = [];
+					drawAgain();
+					switch (itemVal) {
+						case 'drawRiver':
+							draw.drawLineGraphics({
+								callback: res => {
+									res.forEach(r => {
+										pos.push(r.lng)
+										pos.push(r.lat)
+										pos.push(r.alt)
+									})
+									if (pos.length > 0) {
+										draw._drawLayer.entities.removeAll()
+										graphics.createLineVolumeGraphics({
+											name: 'water_01',
+											oid: 'lineWater_01',
+											positions: pos,
+											width: 500,
+											cornerType: Cesium.CornerType.ROUNDED,
+											material: new Cesium.Scene
+										.PolylineFlowWaterMaterialProperty({
+												riverColor: Cesium.Color.SKYBLUE,
+												flowDuration: 50000
+											}),
+										})
+
+									}
+								}
+							})
+							break
+						case 'clean':
+							draw._drawLayer.entities.removeAll()
+							break
+					}
+				}
+
+				function drawAgain() {
+					draw._drawLayer.entities.removeAll()
+				}
+
+				function loadingMenuDom() {
+					const menuData = [{
+						label: '绘制河流',
+						value: 'drawRiver'
+					}]
+					const htmlDom = []
+					menuData.forEach(e => {
+						htmlDom.push(`<span data-val="${e.value}">${e.label}</span>`)
+					})
+					const parentDom = document.getElementById('menuDom');
+					parentDom.innerHTML = htmlDom.join(',')
+				}
+
+				function menuClick(e) {
+					if (e.target.tagName == 'SPAN') {
+						caldDistain(e.target.dataset.val)
+					}
+				}
+				// 创建默认河流
+				function createDefaultWaterPath() {
+					var pos = [
+						103.88981152987425,
+						30.781586401672268,
+						0.10000043650186866,
+						104.03880822233616,
+						30.74676738348347,
+						0,
+						104.1965932502655,
+						30.733767091328744,
+						0.10000043281624701,
+						104.43761253465748,
+						30.803416518673014,
+						0.1000004348830569,
+						104.43801477387932,
+						30.803669974097794,
+						0.10000043509858367
+					]
+					graphics.createLineVolumeGraphics({
+						name: 'water_01',
+						oid: 'lineWater_01',
+						positions: pos,
+						width: 6550,
+						material: new Cesium.Scene.PolylineFlowWaterMaterialProperty({
+							riverColor: Cesium.Color.SKYBLUE,
+							flowDuration: 10000
+						}),
+					})
+				}
+				// 绑定点击
+				const parentDom = document.getElementById('menuDom');
+				parentDom.addEventListener('click', menuClick);
+				// 加载菜单
+				loadingMenuDom();
+				createDefaultWaterPath();
+				// 视角定位
+				base.flyTo({
+					position: {
+						x: -1316325.8004510372,
+						y: 5328682.353043815,
+						z: 3246432.9086183477
+					},
+					orientation: {
+						heading: 1.6802671089814538,
+						pitch: -0.5942780176871376,
+						roll: 0.00009774854244337661
+					}
+				});
+			}
+		</script>
+	</body>
+</html>
